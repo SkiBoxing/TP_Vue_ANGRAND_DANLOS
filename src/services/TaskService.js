@@ -3,6 +3,7 @@ import TaskApi from "../api/TaskApi.js";
 class TaskService {
     tasks = [];
 
+    // Méthode create
     async addTask(task) {
         try {
             await TaskApi.createTask(task);
@@ -12,6 +13,7 @@ class TaskService {
         }
     }
 
+    // Méthode findAll
     async getAllTasks(options = {}) {
         try {
             const apiResponse = await TaskApi.getAllTasks(options);
@@ -45,6 +47,7 @@ class TaskService {
         }
     }
 
+    // Méthode findById
     async getTask(id) {
         try {
             const apiResponse = await TaskApi.getTask(id);
@@ -55,6 +58,7 @@ class TaskService {
         }
     }
 
+    // Méthode update
     async updateTask(id, task) {
         try {
             await TaskApi.updateTask(id, task);
@@ -64,6 +68,7 @@ class TaskService {
         }
     }
 
+    // Méthode delete
     async deleteTask(id) {
         try {
             await TaskApi.deleteTask(id);

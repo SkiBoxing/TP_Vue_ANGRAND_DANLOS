@@ -89,6 +89,7 @@ export default {
     }
   },
   methods: {
+    // Charge les données d'une tâche existante pour le formulaire de modification
     async loadTask() {
       if (!this.isEditMode) {
         return;
@@ -106,6 +107,8 @@ export default {
         this.errorMessage = e.message || 'Impossible de charger la tâche.';
       }
     },
+
+    // Formate une date de l'API
     formatToInputDate(value) {
       if (!value) {
         return '';
@@ -120,22 +123,28 @@ export default {
       const localDate = new Date(year, month - 1, day, hour, minute);
       return localDate.toISOString().slice(0, 16);
     },
+
+    // Formate une date pour l'API
     formatDeadlineForApi(deadline) {
       if (!deadline) {
         return null;
       }
       return deadline.replace('T', ' ').slice(0, 16);
     },
+
+    // Valide les données du formulaire et envoie la requête pour créer ou mettre à jour une tâche
     async saveTask() {
       this.error = false;
       this.errorMessage = '';
 
+      // Validation des champs du formulaire
       if (!this.taskIsValid()) {
         this.error = true;
         this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
         return;
       }
 
+      // Prépare les données à envoyer à l'API
       const taskToSend = {
         name: this.task.name,
         description: this.task.description,
@@ -144,6 +153,7 @@ export default {
         deadline: this.formatDeadlineForApi(this.task.deadline)
       };
 
+      // Envoie la requête pour créer ou mettre à jour la tâche
       try {
         if (this.isEditMode) {
           await TaskService.updateTask(this.id, taskToSend);
@@ -156,9 +166,13 @@ export default {
         this.errorMessage = e.message || 'Une erreur est survenue lors de l’enregistrement.';
       }
     },
+
+    // Vérifie que tous les champs requis du formulaire sont remplis
     taskIsValid() {
       return this.task.name && this.task.description && this.task.priority && this.task.status;
     },
+
+    // Redirige vers la liste des tâches sans enregistrer les modifications
     cancelForm() {
       this.$router.push({ name: 'list' });
     }

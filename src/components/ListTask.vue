@@ -77,18 +77,23 @@ export default {
     }
   },
   methods: {
+    // Chargement des tâches avec pagination et filtres
     async loadTasks(page = 0) {
       this.error = null;
       try {
+        // Met à jour la page courante
         this.pagination.page = page;
 
+        // Vérifie la disponibilité des pages suivante et précédente
         this.nextPageAvailable = await this.checkPageAvailability(this.pagination.page + 1);
         this.previousPageAvailable = await this.checkPageAvailability(this.pagination.page - 1);
 
+        // Prépare les paramètres de requête en fonction des filtres
         const params = { page, size: this.pagination.size };
         if (this.filters.status) params.status = this.filters.status;
         if (this.filters.priority) params.priority = this.filters.priority;
 
+        // Récupère les tâches depuis le service
         const result = await TaskService.getAllTasks(params);
         this.taskList = result.content || [];
       } catch (e) {
@@ -97,43 +102,70 @@ export default {
         this.previousPageAvailable = false;
       }
     },
+
+    // Vérifie si une page est disponible en essayant de charger les tâches de cette page
     async checkPageAvailability(page) {
       try {
+        // Prépare les paramètres de requête en fonction des filtres
         const params = { page, size: this.pagination.size };
         if (this.filters.status) params.status = this.filters.status;
         if (this.filters.priority) params.priority = this.filters.priority;
 
+        // Tente de charger les tâches de la page spécifiée
         const result = await TaskService.getAllTasks(params);
+
+        //Si le résultat contient des tâches, la page est disponible
         return Array.isArray(result.content) && result.content.length > 0;
       } catch (e) {
         return false;
       }
     },
+
+    // Supprime une tâche après confirmation de l'utilisateur
     async deleteTask(task) {
+      // Demande de confirmation avant de supprimer la tâche
       if (!confirm(`Supprimer la tâche « ${task.name} » ?`)) {
         return;
       }
+
+      // Réinitialise l'erreur avant de tenter la suppression
       this.error = null;
+
       try {
+        // Appelle le service pour supprimer la tâche
         await TaskService.deleteTask(task.id);
+
+        // Recharge les tâches après suppression
         await this.loadTasks(this.pagination.page);
       } catch (e) {
         this.error = e.message || 'Impossible de supprimer la tâche.';
       }
     },
+
+    // Bascule le statut d'une tâche entre TODO, IN_PROGRESS et DONE
     async toggleStatus(task) {
+      // Réinitialise l'erreur avant de tenter de changer le statut
       this.error = null;
       try {
+        // Calcul du prochain statut en fonction du statut actuel
         const nextStatus = task.status === 'TODO' ? 'IN_PROGRESS' : task.status === 'IN_PROGRESS' ? 'DONE' : 'TODO';
+
+        // Appelle le service pour mettre à jour la tâche avec le nouveau statut
         await TaskService.updateTask(task.id, { ...task, status: nextStatus, deadline: this.formatDateForApi(task.deadline), creationDate: this.formatDateForApi(task.creationDate) });
+        
+        // Recharge les tâches après la mise à jour du statut
         await this.loadTasks(this.pagination.page);
       } catch (e) {
         this.error = e.message || 'Impossible de changer le statut.';
       }
     },
+
+    // Redirige vers le formulaire de modification d'une tâche
     editTask(task) {
       this.$router.push({ name: 'form', params: { id: task.id } });
     },
+
+    // Retourne une classe CSS en fonction de la priorité de la tâche pour le style
     getPriorityClass(priority) {
       switch(priority) {
         case 'HIGH': return 'high';
@@ -142,17 +174,23 @@ export default {
         default: return 'normal';
       }
     },
+
+    // Formate une date pour l'affichage en français
     formatDate(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
       return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     },
+
+    // Formate une date pour l'API
     formatDateForApi(dateString) {
       if (!dateString) {
         return null;
       }
       return dateString.replace('T', ' ').slice(0, 16);
     },
+
+    // Met à jour les filtres et synchronise avec les paramètres de l'URL
     updateFilters() {
       const query = {};
       if (this.filters.status) query.status = this.filters.status;
@@ -160,6 +198,8 @@ export default {
       this.$router.push({ query }).catch(() => {});
       this.loadTasks(0); // Reset to page 0 when filters change
     },
+
+    // Initialise les filtres à partir des paramètres de l'URL lors du montage du composant
     setFiltersFromQuery() {
       this.filters.status = this.$route.query.status || '';
       this.filters.priority = this.$route.query.priority || '';
